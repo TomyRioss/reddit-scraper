@@ -98,26 +98,16 @@ export default function Home() {
 
   const ratePosts = async () => {
     setRating(true);
-    const unrated = posts.filter(p => !ratings[p.id]);
-    for (const post of unrated.slice(0, 20)) {
-      try {
-        const res = await fetch('/api/analyze', {
-          method: 'POST',
-          body: JSON.stringify({ postId: post.id }),
-        });
-        const data = await res.json();
-        setRatings(prev => ({
-          ...prev,
-          [post.id]: {
-            stars: Math.round((data.relevanceScore || 0) / 2),
-            explanation: data.summary || '',
-            tags: data.skills || [],
-          }
-        }));
-      } catch (e) {}
-    }
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        body: JSON.stringify({ rate: true }),
+      });
+      const data = await res.json();
+      setScrapeResult({ rating: data });
+      loadData();
+    } catch (e: any) { setError(e.message); }
     setRating(false);
-    loadData();
   };
 
   const sendChat = async () => {
@@ -194,10 +184,20 @@ export default function Home() {
       <div className="max-w-6xl mx-auto p-4">
         {/* Error */}
         {error && <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-sm">{error}</div>}
-        {scrapeResult && (
+        {scrapeResult && !scrapeResult.rating && (
           <div className="mb-4 p-3 bg-gray-800/80 rounded-lg text-sm border border-gray-700">
             📊 <strong>{scrapeResult.totalFound}</strong> encontrados, <strong>{scrapeResult.totalSaved}</strong> nuevos
             {scrapeResult.errors?.length > 0 && <span className="text-red-400"> · {scrapeResult.errors.length} errores</span>}
+          </div>
+        )}
+        {scrapeResult?.rating && (
+          <div className="mb-4 p-3 bg-gray-800/80 rounded-lg text-sm border border-green-700">
+            🤖 <strong>Calificación IA completada</strong><br/>
+            <span className="text-green-400">✅ {scrapeResult.rating.good} ofertas buenas</span>
+            {scrapeResult.rating.aggregator > 0 && <span className="text-red-400"> · 🗑️ {scrapeResult.rating.aggregator} agregadores/spam</span>}
+            {scrapeResult.rating.fulltime > 0 && <span className="text-orange-400"> · 🚫 {scrapeResult.rating.fulltime} empleos fijos</span>}
+            {scrapeResult.rating.filtered > 0 && <span className="text-gray-400"> · ⏭️ {scrapeResult.rating.filtered} otros filtrados</span>}
+            <span className="text-gray-500"> · {scrapeResult.rating.total} total procesados</span>
           </div>
         )}
 

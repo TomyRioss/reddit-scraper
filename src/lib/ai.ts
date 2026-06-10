@@ -32,56 +32,41 @@ export async function analyzePost(
 ): Promise<AnalysisResult> {
   const client = getClient();
   const text = `Title: ${title}\nBody: ${(selftext || '').substring(0, 3000)}`;
-
   const prompt = `Analiza este post de Reddit sobre trabajo freelance en programación/desarrollo.
 Extraé la información en formato JSON exacto (sin markdown, solo JSON):
-
 {
   "summary": "resumen corto de 1-2 oraciones en español",
-  "isJobOffer": true/false (si es una oferta de trabajo real, no una pregunta o discusión),
-  "isFreelance": true/false (si es freelance/contrato/proyecto, no empleo full-time),
-  "relevanceScore": 0-10 (qué tan relevante es para un programador freelance),
-  "skills": ["lista", "de", "habilidades", "requeridas"],
-  "budget": "presupuesto mencionado o 'No especificado'",
+  "isJobOffer": true/false,
+  "isFreelance": true/false,
+  "relevanceScore": 0-10,
+  "skills": ["lista", "de", "habilidades"],
+  "budget": "presupuesto o 'No especificado'",
   "location": "ubicación o 'Remoto' o 'No especificada'",
   "remote": true/false,
   "contactInfo": "cómo contactar o 'No especificado'"
 }
-
-Post:
-${text}`;
-
+Post: ${text}`;
   try {
-    const response = await client.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.1,
-      max_tokens: 500,
-    });
+    const response = await client.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 500 });
     const content = response.choices?.[0]?.message?.content || '{}';
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
     return JSON.parse(content);
   } catch (e: any) {
-    const errMsg = e.message || 'Unknown error';
-    console.warn('AI analysis failed:', errMsg);
-    return {
-      summary: errMsg.substring(0, 200),
-      isJobOffer: false, isFreelance: false, relevanceScore: 0,
-      skills: [], budget: 'No especificado', location: 'No especificada',
-      remote: false, contactInfo: 'No especificado',
-    };
+    return { summary: e.message?.substring(0,200) || 'Error', isJobOffer: false, isFreelance: false, relevanceScore: 0, skills: [], budget: 'No especificado', location: 'No especificada', remote: false, contactInfo: 'No especificado' };
   }
 }
 
 export interface OfferRating {
   stars: number;          // 0-5
-  explanation: string;     // why this rating
-  projectType: string;     // landing_page, fullstack_app, saas, api, wordpress, etc
-  competitionLevel: string; // low, medium, high
-  recommendedFor: string[]; // skills of freelancer who should apply
-  estimatedValue: string;   // estimated project value range
-  tags: string[];           // relevant tags
+  explanation: string;
+  projectType: string;    // landing_page|web_app|fullstack_app|saas|api|wordpress|mobile|ecommerce|other
+  competitionLevel: string; // low|medium|high
+  recommendedFor: string[];
+  estimatedValue: string;
+  tags: string[];
+  isAggregator: boolean;  // posts that list many jobs at once (spam)
+  isFulltime: boolean;    // full-time employment, not freelance
 }
 
 export async function rateOffer(
@@ -92,46 +77,47 @@ export async function rateOffer(
   const client = getClient();
   const text = `Title: ${title}\nBody: ${(selftext || '').substring(0, 2500)}`;
 
-  const prompt = `Eres un experto en encontrar las mejores ofertas freelance de programación.
-Analiza este post de Reddit y CALIFICALO según qué tan atractivo es para un programador freelance.
+  const prompt = `Eres un experto freelance en programación analizando ofertas de Reddit.
+CALIFICA cada oferta según qué tan ATRACTIVA es para un programador freelance que busca proyectos.
 
-REGLAS DE PUNTUACIÓN:
-- 5 ⭐ = Oportunidad excelente: proyecto complejo (full-stack, SaaS, app completa), presupuesto bueno, poca competencia
-- 4 ⭐ = Muy buena: stack moderno (Next.js, React, Node, Python), freelance real, condiciones claras
-- 3 ⭐ = Buena: proyecto decente pero genérico o con mucha competencia
-- 2 ⭐ = Regular: proyecto pequeño/genérico (landing page, WordPress), mucha competencia, baja paga
-- 1 ⭐ = Mala: no es oferta real, es spam, o pide trabajo gratuito
-- 0 ⭐ = Inútil: no es una oferta de trabajo
+REGLAS IMPORTANTES:
+- ⭐⭐⭐⭐⭐ (5) = Proyecto COMPLETO y valioso: app full-stack, SaaS, ecommerce, plataforma. Stack moderno. Presupuesto bueno. Poca competencia. Ej: "Build a marketplace platform with Next.js and Stripe"
+- ⭐⭐⭐⭐ (4) = Proyecto sólido: app web completa, API compleja. Stack decente. Condiciones claras. Ej: "Full-stack app with React + Node + PostgreSQL"
+- ⭐⭐⭐ (3) = Proyecto aceptable: landing page con extras, WordPress custom, web simple. Competencia media. Ej: "Need a website for my business"
+- ⭐⭐ (2) = Proyecto genérico de mucha competencia: landing page básica HTML/CSS, WordPress template. Baja paga. Ej: "Landing page HTML CSS"
+- ⭐ (1) = Mala oferta: no es freelance, bajo presupuesto, condiciones turbias
+- 0 = No es oferta o es basura
 
-Responde SOLO con JSON, sin markdown:
+CASOS ESPECIALES - PUNTUAR MUY BAJO:
+- Posts que listan MUCHAS ofertas juntas tipo "30 Remote Jobs", "50 JavaScript jobs" → 0 ⭐ (agregadores/spam)
+- Ofertas de empleo FULL-TIME fijo (no freelance) → 0 ⭐ (buscan empleado, no contractor)
+- Ofertas por hora con presupuesto bajísimo → 1 ⭐
+- Posts "FOR HIRE" (personas ofreciéndose, no empleadores) → 1 ⭐ (no es oferta)
+- Scam o crypto → 0 ⭐
+
+Responde SOLO con JSON SIN MARKDOWN:
 {
   "stars": <0-5>,
-  "explanation": "explicación breve de por qué esta calificación",
-  "projectType": "tipo de proyecto (landing_page|web_app|fullstack_app|saas|api|wordpress|mobile|other)",
+  "explanation": "por qué esta calificación (1 oración)",
+  "projectType": "tipo de proyecto",
   "competitionLevel": "low|medium|high",
   "recommendedFor": ["skill1", "skill2"],
-  "estimatedValue": "rango de precio estimado o 'No especificado'",
-  "tags": ["tag1", "tag2"]
+  "estimatedValue": "rango de precio o 'No especificado'",
+  "tags": ["tag1", "tag2"],
+  "isAggregator": true/false (true si lista multiples ofertas juntas),
+  "isFulltime": true/false (true si es empleo fijo, no freelance)
 }
 
 Post: ${text}`;
 
   try {
-    const response = await client.chat.completions.create({
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.2,
-      max_tokens: 400,
-    });
+    const response = await client.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 500 });
     const content = response.choices?.[0]?.message?.content || '{}';
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
     return JSON.parse(content);
-  } catch (e: any) {
-    return {
-      stars: 0, explanation: 'Error analizando', projectType: 'other',
-      competitionLevel: 'high', recommendedFor: [], estimatedValue: 'No especificado', tags: [],
-    };
+  } catch {
+    return { stars: 0, explanation: 'Error analizando', projectType: 'other', competitionLevel: 'high', recommendedFor: [], estimatedValue: 'No especificado', tags: [], isAggregator: false, isFulltime: false };
   }
 }
 
