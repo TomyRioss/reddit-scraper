@@ -1,41 +1,61 @@
 @import "tailwindcss";
 
+/* ── Design System ─────────────────────────────────────────── */
 @theme {
-  --color-surface: #07070d;
-  --color-card: #12121e;
-  --color-card-hover: #1a1a2e;
-  --color-border: rgba(255,255,255,0.06);
-  --color-border-hover: rgba(255,255,255,0.12);
-  --color-text: #e8e8ed;
-  --color-text-muted: rgba(255,255,255,0.4);
-  --color-text-dim: rgba(255,255,255,0.2);
+  --color-bg: #0a0a0f;
+  --color-bg-elevated: #12121e;
+  --color-bg-card: #16162a;
+  --color-bg-card-hover: #1c1c36;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-hover: rgba(255, 255, 255, 0.12);
   --color-accent: #6366f1;
-  --color-accent-hover: #818cf8;
-  --color-amber: #f59e0b;
-  --color-rose: #f472b6;
-  --color-emerald: #6ee7b7;
-  --color-violet: #8b5cf6;
+  --color-accent-soft: rgba(99, 102, 241, 0.1);
+  --color-accent-glow: rgba(99, 102, 241, 0.15);
+  --color-text: #f0f0f5;
+  --color-text-secondary: rgba(255, 255, 255, 0.55);
+  --color-text-dim: rgba(255, 255, 255, 0.25);
+  --color-success: #34d399;
+  --color-warning: #f59e0b;
+  --color-danger: #f87171;
 }
 
+/* ── Base ──────────────────────────────────────────────────── */
 body {
-  background: var(--color-surface);
+  background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Scrollbar ─────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.04); border-radius: 10px; }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ── Animations ────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade { animation: fade-in 0.3s ease-out forwards; }
-.animate-fade-1 { animation: fade-in 0.3s ease-out 0.05s forwards; opacity: 0; }
-.animate-fade-2 { animation: fade-in 0.3s ease-out 0.1s forwards; opacity: 0; }
-.animate-fade-3 { animation: fade-in 0.3s ease-out 0.15s forwards; opacity: 0; }
+@keyframes slide-up-sm {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.2; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
 
-@keyframes pulse-dot { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
-.thinking-dot { animation: pulse-dot 1.4s infinite; }
+.anim-up    { animation: slide-up 0.35s ease-out both; }
+.anim-up-sm { animation: slide-up-sm 0.3s ease-out both; }
+.pulse-dot  { animation: pulse-dot 1.2s ease-in-out infinite; }
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
