@@ -4,7 +4,7 @@ let _client: OpenAI | null = null;
 
 export function getClient(): OpenAI {
   if (!_client) {
-    const apiKey = process.env.OPENCODE_API_KEY || 'sk-fqAFJGclVktPVKuJfIxSnKaYtfSWXkyyTLJSqL7RkreWcDbaIbn23lPi2cB3tCoI';
+    const apiKey = process.env.OPENCODE_API_KEY || '';
     const baseURL = process.env.OPENCODE_BASE_URL || 'https://opencode.ai/zen/go/v1';
 
     _client = new OpenAI({

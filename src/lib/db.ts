@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 import { Subreddit, Keyword, RedditPost, DEFAULT_SUBREDDITS, DEFAULT_KEYWORDS_ES, DEFAULT_KEYWORDS_EN } from './types';
 
-const DATABASE_URL = 'postgresql://postgres.oauwqwdamboepltdibjv:J1qmLRebPibTi1px@aws-1-sa-east-1.pooler.supabase.com:6543/postgres';
+const DATABASE_URL = process.env.DATABASE_URL || '';
 
 let _pool: Pool | null = null;
 
