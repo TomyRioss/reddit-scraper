@@ -48,7 +48,7 @@ Extraé la información en formato JSON exacto (sin markdown, solo JSON):
 }
 Post: ${text}`;
   try {
-    const response = await client.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 500 });
+    const response = await client.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 1500 });
     const content = response.choices?.[0]?.message?.content || '{}';
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
@@ -112,7 +112,7 @@ Responde SOLO con JSON SIN MARKDOWN:
 Post: ${text}`;
 
   try {
-    const response = await client.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 500 });
+    const response = await client.chat.completions.create({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2, max_tokens: 1500 });
     const content = response.choices?.[0]?.message?.content || '{}';
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
@@ -135,7 +135,8 @@ export async function chatWithAI(
       ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     ],
     temperature: 0.3,
-    max_tokens: 800,
+    max_tokens: 1500,
   });
-  return response.choices?.[0]?.message?.content || '';
+  const m = response.choices?.[0]?.message;
+  return m?.content || (m as any)?.reasoning_content || '';
 }
