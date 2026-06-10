@@ -4,8 +4,9 @@ let _client: OpenAI | null = null;
 
 export function getClient(): OpenAI {
   if (!_client) {
-    const apiKey = process.env.OPENCODE_API_KEY || '';
-    const baseURL = process.env.OPENCODE_BASE_URL || 'https://opencode.ai/zen/go/v1';
+    // OpenAI GPT-4o-mini (rápido y barato)
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENCODE_API_KEY || '';
+    const baseURL = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
     _client = new OpenAI({ apiKey, baseURL });
   }
   return _client;
@@ -28,7 +29,7 @@ export interface AnalysisResult {
 export async function analyzePost(
   title: string,
   selftext: string,
-  model = 'deepseek-v4-flash'
+  model = 'gpt-4o-mini'
 ): Promise<AnalysisResult> {
   const client = getClient();
   const text = `Title: ${title}\nBody: ${(selftext || '').substring(0, 3000)}`;
@@ -72,7 +73,7 @@ export interface OfferRating {
 export async function rateOffer(
   title: string,
   selftext: string,
-  model = 'deepseek-v4-flash'
+  model = 'gpt-4o-mini'
 ): Promise<OfferRating> {
   const client = getClient();
   const text = `Title: ${title}\nBody: ${(selftext || '').substring(0, 2500)}`;
@@ -124,7 +125,7 @@ Post: ${text}`;
 export async function chatWithAI(
   messages: { role: string; content: string }[],
   systemPrompt: string,
-  model = 'deepseek-v4-flash'
+  model = 'gpt-4o-mini'
 ): Promise<string> {
   const client = getClient();
   const response = await client.chat.completions.create({
