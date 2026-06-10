@@ -24,6 +24,8 @@ function extractBetween(text: string, start: string, end: string): string {
   return text.substring(from, e);
 }
 
+const FORTY_EIGHT_HOURS = 48 * 60 * 60;
+
 function extractPostsFromRSS(xml: string, subreddit: string, keywords: Keyword[]): Array<{ post: Omit<RedditPost, 'scraped_at' | 'ai_summary' | 'ai_score'>; matched: string[] }> {
   const results: Array<{ post: Omit<RedditPost, 'scraped_at' | 'ai_summary' | 'ai_score'>; matched: string[] }> = [];
   
@@ -69,6 +71,10 @@ function extractPostsFromRSS(xml: string, subreddit: string, keywords: Keyword[]
       createdUtc = Math.floor(new Date(updatedMatch[1]).getTime() / 1000);
     }
     
+    // Skip posts older than 48 hours
+    const now = Math.floor(Date.now() / 1000);
+    if (now - createdUtc > FORTY_EIGHT_HOURS) continue;
+
     const categoryMatch = entryXml.match(/<category term="([^"]*)"/);
     const flair = categoryMatch ? categoryMatch[1] : '';
     
