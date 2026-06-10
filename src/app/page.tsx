@@ -56,7 +56,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-[#e4e4ec] antialiased">
-      <style jsx global>{`
+      <style>{`
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.04);border-radius:10px}
         @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .ani{animation:fi 0.25s ease-out both}
